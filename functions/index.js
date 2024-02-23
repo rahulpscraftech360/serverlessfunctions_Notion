@@ -53,30 +53,45 @@ app.post("/api/upload", async (req, res) => {
     return res.status(500).send({ status: "failed", msg: error.message });
   }
 });
+// const model_id = "v31d0og3";
+// // "https://model-YOUR_MODEL_ID.api.baseten.co/production/predict";
+// const basetenApiUrl = `https://model-${model_id}.api.baseten.co/production/predict`; // Replace YOUR_MODEL_ID with your actual model ID
+// const basetenApiKey = "SPm30BuL.WmiOvbe20jiB0aog3XYMkDX4rXN7b5gc"; // Replace this with your actual Baseten API key
 
-// "https://model-YOUR_MODEL_ID.api.baseten.co/production/predict";
-const basetenApiUrl = "https://model-qjj0klq.api.baseten.co/production/predict"; // Replace YOUR_MODEL_ID with your actual model ID
-const basetenApiKey = "SPm30BuL.WmiOvbe20jiB0aog3XYMkDX4rXN7b5gc"; // Replace this with your actual Baseten API key
+// app.post("/call-baseten-model", async (req, res) => {
+//   console.log("calling baseTen");
+//   try {
+//     const data = {
+//       url: "https://cdn.baseten.co/docs/production/Gettysburg.mp3",
+//     };
 
-app.post("/call-baseten-model", async (req, res) => {
-  try {
-    const data = {
-      url: "https://cdn.baseten.co/docs/production/Gettysburg.mp3",
-    };
+//     const response = await axios.post(basetenApiUrl, data, {
+//       headers: {
+//         Authorization: `Api-Key ${basetenApiKey}`,
+//       },
+//     });
 
-    const response = await axios.post(basetenApiUrl, data, {
-      headers: {
-        Authorization: `Api-Key ${basetenApiKey}`,
-      },
-    });
+//     // Send the model's response back to the client
+//     res.json(response.data);
+//   } catch (error) {
+//     console.error("Error calling Baseten model:", error);
+//     res.status(500).send("Failed to call Baseten model");
+//   }
+// });
 
-    // Send the model's response back to the client
-    res.json(response.data);
-  } catch (error) {
-    console.error("Error calling Baseten model:", error);
-    res.status(500).send("Failed to call Baseten model");
-  }
-});
+// expected result
+
+// {
+//     "language": "english",
+//     "segments": [
+//         {
+//             "start": 0,
+//             "end": 11.52,
+//             "text": " Four score and seven years ago our fathers brought forth upon this continent a new nation conceived in liberty and dedicated to the proposition that all men are created equal."
+//         }
+//     ],
+//     "text": " Four score and seven years ago our fathers brought forth upon this continent a new nation conceived in liberty and dedicated to the proposition that all men are created equal."
+// }
 exports.app = functions.https.onRequest(app);
 
 // Cloud Storage trigger function
