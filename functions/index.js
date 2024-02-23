@@ -8,6 +8,7 @@ const axios = require("axios");
 const cors = require("cors");
 const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const { Storage } = require("@google-cloud/storage"); // Add this for Storage access
+require("dotenv").config();
 
 const serviceAccount = require("./serviceAccountKey.json");
 
@@ -92,6 +93,62 @@ app.post("/api/upload", async (req, res) => {
 //     ],
 //     "text": " Four score and seven years ago our fathers brought forth upon this continent a new nation conceived in liberty and dedicated to the proposition that all men are created equal."
 // }
+
+//generate summery using open ai
+
+app.post("/generate-summary", async (req, res) => {
+  const text =
+    "Summarize the following text :\n\nFour score and seven years ago our fathers brought forth upon this continent a new nation conceived in liberty and dedicated to the proposition that all men are created equal.";
+  //   console.log(req.body);
+  //   const { text } = req.body; // Extracting text from the request body
+  console.log("hereee>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+  //   console.log(text);
+  if (!text) {
+    return res.status(400).send({ error: "Please provide text to summarize." });
+  }
+
+  const openaiApiKey = process.env.OPENAI_API_KEY; // Replace this with your OpenAI API key
+
+  try {
+    console.log("APIKEY", openaiApiKey);
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        // model: "text-davinci-003", // or another model name as per your requirement
+        model: "gpt-3.5-turbo", // or another model name as per your requirement
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful assistant.",
+          },
+          {
+            role: "user",
+            content:
+              "Summarize the following text  and list the main points as bullet points and the response should include both summery and main points :\n\nFour score and seven years ago our fathers brought forth upon this continent a new nation conceived in liberty and dedicated to the proposition that all men are created equal.",
+          },
+        ],
+        temperature: 0.5,
+        max_tokens: 150,
+        top_p: 1.0,
+        frequency_penalty: 0.0,
+        presence_penalty: 0.0,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openaiApiKey}`,
+        },
+      }
+    );
+    console.log(response.data.choices[0].content);
+    // // Sending the summary and bullet points back to the client
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error("Error calling OpenAI:", error);
+    res.status(500).send({ error: "Failed to generate summary" });
+  }
+});
+
 exports.app = functions.https.onRequest(app);
 
 // Cloud Storage trigger function
