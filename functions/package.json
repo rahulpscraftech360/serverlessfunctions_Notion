@@ -5,7 +5,7 @@
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
+    "deploy": "firebase deploy",
     "logs": "firebase functions:log"
   },
   "engines": {
@@ -13,6 +13,7 @@
   },
   "main": "index.js",
   "dependencies": {
+    "@notionhq/client": "^2.2.14",
     "axios": "^1.6.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
