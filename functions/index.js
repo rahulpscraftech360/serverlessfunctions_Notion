@@ -360,7 +360,8 @@ const callBasetenModel = async (generatedUrl) => {
   try {
     const response = await axios.post(
       `https://model-${model_id}.api.baseten.co/production/predict`, // Use your deployed function URL
-      { url: "https://cdn.baseten.co/docs/production/Gettysburg.mp3" },
+      // { url: "https://cdn.baseten.co/docs/production/Gettysburg.mp3" },
+      { url: generatedUrl },
       {
         headers: {
           "Content-Type": "application/json",
@@ -524,8 +525,6 @@ exports.generatePublicLink = functions.storage
 
         console.log("Transcription", Transcription);
 
-        const textToSummarize =
-          "Four score and seven years ago our fathers brought forth upon this continent a new nation conceived in liberty and dedicated to the proposition that all men are created equal";
         const summery = await generateSummary(Transcription);
         // const transcription = textToSummarize;
         console.log("summery>>>>>", summery.content);
@@ -540,10 +539,4 @@ exports.generatePublicLink = functions.storage
     } else {
       console.log('File is not in "recordings/" folder:', object.name);
     }
-  });
-exports.generateThumbnail = functions.storage
-  .object()
-  .onFinalize(async (object) => {
-    // generateThumbnail code...
-    console.log("function triggered");
   });
