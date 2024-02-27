@@ -168,12 +168,12 @@ async function addItem(details, Transcription) {
     let isMainPoints = false;
 
     lines.forEach((line) => {
-      if (line.startsWith("Main Title:")) {
+      if (line.startsWith("**Main Title:**")) {
         title = line.replace("Main Title:", "").trim();
-      } else if (line.startsWith("Summary:")) {
+      } else if (line.startsWith("**Summary:**")) {
         isSummary = true;
         isMainPoints = false;
-      } else if (line.startsWith("Main Points:")) {
+      } else if (line.startsWith("**Main Points:**")) {
         isSummary = false;
         isMainPoints = true;
       } else {
@@ -196,6 +196,7 @@ async function addItem(details, Transcription) {
   console.log("Summary:", extractedData.summary);
   console.log("Main Points:", extractedData.mainPoints);
   try {
+    console.log("create page");
     const newPageResponse = await notion.pages.create({
       parent: { database_id: databaseId },
       icon: {
@@ -226,71 +227,102 @@ async function addItem(details, Transcription) {
 
     // Add Transcription if available
     if (Transcription) {
-      children.push(
-        {
-          object: "block",
-          type: "heading_2",
-          heading_2: {
-            rich_text: [{ type: "text", text: { content: "Transcription" } }],
-          },
+      console.log("length", Transcription.length);
+      console.log("transcription>>>>>>>>>>>>>>>>>>>>>>>", Transcription);
+      const MAX_LENGTH = 2000;
+      const transcription = Transcription;
+      console.log("length", transcription.length);
+      children.push({
+        object: "block",
+        type: "heading_2",
+        heading_2: {
+          rich_text: [{ type: "text", text: { content: "Transcription" } }],
         },
-        {
+      });
+
+      // Split the transcription into chunks and create blocks for each
+      for (let i = 0; i < transcription.length; i += MAX_LENGTH) {
+        const chunk = transcription.substring(i, i + MAX_LENGTH);
+        children.push({
           object: "block",
           type: "paragraph",
           paragraph: {
-            rich_text: [{ type: "text", text: { content: Transcription } }],
+            rich_text: [{ type: "text", text: { content: chunk } }],
           },
-        }
-      );
+        });
+      }
     }
 
     // Add Summary if available
     if (extractedData.summary) {
-      children.push(
-        {
-          object: "block",
-          type: "heading_2",
-          heading_2: {
-            rich_text: [{ type: "text", text: { content: "Summary" } }],
-          },
+      const MAX_LENGTH = 2000;
+      const summary = extractedData.summary;
+      children.push({
+        object: "block",
+        type: "heading_2",
+        heading_2: {
+          rich_text: [{ type: "text", text: { content: "Summary" } }],
         },
-        {
+      });
+
+      // Split the summary into chunks and create blocks for each
+      for (let i = 0; i < summary.length; i += MAX_LENGTH) {
+        const chunk = summary.substring(i, i + MAX_LENGTH);
+        children.push({
           object: "block",
           type: "paragraph",
           paragraph: {
-            rich_text: [
-              { type: "text", text: { content: extractedData.summary } },
-            ],
+            rich_text: [{ type: "text", text: { content: chunk } }],
           },
-        }
-      );
+        });
+      }
     }
 
     // Add Main Points if available
     if (extractedData.mainPoints && extractedData.mainPoints.length > 0) {
-      children.push(
-        {
-          object: "block",
-          type: "heading_2",
-          heading_2: {
-            rich_text: [{ type: "text", text: { content: "Main Points" } }],
-          },
+      console.log("in main points");
+      children.push({
+        object: "block",
+        type: "heading_2",
+        heading_2: {
+          rich_text: [{ type: "text", text: { content: "Main Points" } }],
         },
-        ...extractedData.mainPoints.map((point) => ({
-          object: "block",
-          type: "bulleted_list_item",
-          bulleted_list_item: {
-            rich_text: [{ type: "text", text: { content: point } }],
-          },
-        }))
-      );
+      });
+
+      extractedData.mainPoints.forEach((point) => {
+        const MAX_LENGTH = 2000;
+        // Check if the point exceeds the maximum length and needs to be split
+        if (point.length > MAX_LENGTH) {
+          for (let i = 0; i < point.length; i += MAX_LENGTH) {
+            const chunk = point.substring(i, i + MAX_LENGTH);
+            // Add each chunk as a separate bulleted item
+            children.push({
+              object: "block",
+              type: "bulleted_list_item",
+              bulleted_list_item: {
+                rich_text: [{ type: "text", text: { content: chunk } }],
+              },
+            });
+          }
+        } else {
+          // If the point does not exceed the maximum length, add it as a single bulleted item
+          children.push({
+            object: "block",
+            type: "bulleted_list_item",
+            bulleted_list_item: {
+              rich_text: [{ type: "text", text: { content: point } }],
+            },
+          });
+        }
+      });
     }
 
     // Add Potential Action Items if available
     if (
-      details.potentialActionItems &&
-      details.potentialActionItems.length > 0
+      extractedData.potentialActionItems &&
+      extractedData.potentialActionItems.length > 0
     ) {
+      console.log("in potentialActionItems");
       children.push(
         {
           object: "block",
@@ -413,9 +445,9 @@ const callBasetenModel = async (generatedUrl) => {
 const generateSummary = async (textToSummarize) => {
   console.log("here we are generating summary of text");
   console.log(textToSummarize);
-  if (!textToSummarize) {
-    throw new Error("Please provide text to summarize.");
-  }
+  // if (!textToSummarize) {
+  //   throw new Error("Please provide text to summarize.");
+  // }
 
   const openaiApiKey = process.env.OPENAI_API_KEY; // Ensure your OpenAI API key is set in your environment variables
   console.log("openAi Key", process.env.OPENAI_API_KEY);
@@ -469,8 +501,7 @@ const generateSummary = async (textToSummarize) => {
           },
           {
             role: "user",
-            content:
-              "Summarize the following text give a main title  and list the main points as bullet points and the response should include both summery and main points :\n\nFour score and seven years ago our fathers brought forth upon this continent a new nation conceived in liberty and dedicated to the proposition that all men are created equal.",
+            content: `Summarize the following text give a main title, and list the main points as bullet points under main points heading  and the response should include both summery and main points :\n\n${textToSummarize}`,
           },
         ],
         temperature: 0.5,
@@ -522,8 +553,8 @@ exports.generatePublicLink = functions.storage
         const Transcription = await callBasetenModel(publicUrl);
 
         // creatiing  data , like summey , main ponts using opnen ai
-
-        console.log("Transcription", Transcription);
+        // const Transcription = "fjbkdsbkjbsdk";
+        // console.log("Transcription", Transcription);
 
         const summery = await generateSummary(Transcription);
         // const transcription = textToSummarize;
